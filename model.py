@@ -257,7 +257,7 @@ class Database:
         :return: Menu entries
         """
         treestore = gtk.TreeStore.new(types=[str, str, str, bool, Pango.Weight])
-        toplevel = treestore.append(None)
+        toplevel : gtk.TreeIter = treestore.append(None)
         treestore.set_value(toplevel, 0, self.data.text)
         if self.data.type is not None:
             treestore.set_value(toplevel, 1, self.data.type)

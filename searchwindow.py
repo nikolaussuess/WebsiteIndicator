@@ -34,7 +34,6 @@ class SearchWindow(gtk.Window):
         self.searchentry = gtk.SearchEntry()
         self.grid.attach(self.searchentry, 0, 0, 3, 1)
 
-        #vbox = gtk.Box(orientation=gtk.Orientation.HORIZONTAL)
         self.subtree_checkbox = gtk.CheckButton(label="show subtrees of matches")
         self.grid.attach(self.subtree_checkbox, 4,0,1,1)
 
@@ -43,18 +42,21 @@ class SearchWindow(gtk.Window):
         col = gtk.TreeViewColumn(title="Name")
         col.pack_start(renderer, True)
         col.add_attribute(renderer, "text", 0)
+        col.set_reorderable(True)
         self.treeview.append_column(col)
 
         renderer = gtk.CellRendererText()
         col = gtk.TreeViewColumn(title="Type")
         col.pack_start(renderer, True)
         col.add_attribute(renderer, "text", 1)
+        col.set_reorderable(True)
         self.treeview.append_column(col)
 
         renderer = gtk.CellRendererText()
         col = gtk.TreeViewColumn(title="Action")
         col.pack_start(renderer, True)
         col.add_attribute(renderer, "text", 2)
+        col.set_reorderable(True)
         self.treeview.append_column(col)
 
         self.treeview.expand_all()
@@ -82,6 +84,39 @@ class SearchWindow(gtk.Window):
         self.subtree_checkbox.connect("toggled", lambda source: self.refresh_results())
         self.treeview.connect('button-press-event', self.do_execute_action)
 
+        self.set_up_context_menu()
+
+    def set_up_context_menu(self) -> None:
+        """
+        Creates the context menu for the table view.
+        :return: Nothing.
+        """
+        self.menu = gtk.Menu()
+
+        button_info = gtk.ImageMenuItem("Execute")
+        button_info.connect('activate', lambda source: self.do_execute_action(source))
+        self.menu.append(button_info)
+
+        button_copy = gtk.ImageMenuItem("Copy link/action")
+        button_copy.connect('activate', lambda source: self.copy_to_clipboard())
+        self.menu.append(button_copy)
+
+        button_copy = gtk.ImageMenuItem("Copy title")
+        button_copy.connect('activate', lambda source: self.copy_to_clipboard(what='text'))
+        self.menu.append(button_copy)
+
+        button_edit = gtk.ImageMenuItem("Edit")
+        button_edit.connect('activate', lambda source: self.not_implemented())
+        self.menu.append(button_edit)
+
+        button_delete = gtk.ImageMenuItem("Delete")
+        button_delete.connect('activate', lambda source: self.not_implemented())
+        self.menu.append(button_delete)
+
+        self.menu.show_all()
+        self.treeview.connect('button-release-event',
+                              lambda button, event: self.menu.popup(None, None, None, None, event.button, event.time) if event.button == 3 else None)
+
     def on_key_event(self, widget : gtk.Widget, event : gdk.EventKey) -> None:
         """
         Support Strg+C to copy and Enter to open an entry.
@@ -95,15 +130,23 @@ class SearchWindow(gtk.Window):
         shortcut = gtk.accelerator_get_label(event.keyval, event.state)
         #print(shortcut)
         if shortcut in ("Strg+Mod2+C", "Strg+C", "Ctrl+C", "Ctrl+Mod2+C"):
-            sel = self.treeview.get_selection()
-            model, treeiter = sel.get_selected_rows()
-            if treeiter is not None and model[treeiter][1] == Database.Item.TYPE_WEB:
-                self.clipboard.set_text(model[treeiter][2], -1)
+            self.copy_to_clipboard()
         elif shortcut in ("Enter", "Mod2+Enter"):
             sel = self.treeview.get_selection()
             model, treeiter = sel.get_selected_rows()
             if treeiter is not None and model[treeiter][1] == Database.Item.TYPE_WEB:
                 webbrowser.open(model[treeiter][2])
+
+    def copy_to_clipboard(self, what = 'action'):
+        sel = self.treeview.get_selection()
+        model, treeiter = sel.get_selected_rows()
+        if treeiter is not None and model[treeiter][1] == Database.Item.TYPE_WEB:
+            if what == 'action':
+                self.clipboard.set_text(model[treeiter][2], -1)
+            elif what == 'text':
+                self.clipboard.set_text(model[treeiter][0], -1)
+        elif treeiter is not None and what == 'text':
+            self.clipboard.set_text(model[treeiter][0], -1)
 
     def refresh_results(self) -> None:
         """
@@ -177,15 +220,23 @@ class SearchWindow(gtk.Window):
             return False
         return False
 
-    def do_execute_action(self, widget : gtk.Widget, event) -> None:
+    def do_execute_action(self, widget : gtk.Widget, event = None) -> None:
         """
         Execute the action (e.g., open the selected website).
         :param widget:
         :param event:
         :return: Nothing.
         """
-        if event.type == gdk.EventType.DOUBLE_BUTTON_PRESS:
+        if event is None or event.type == gdk.EventType.DOUBLE_BUTTON_PRESS:
             sel = self.treeview.get_selection()
             model, treeiter = sel.get_selected_rows()
             if treeiter is not None and model[treeiter][1] == Database.Item.TYPE_WEB:
                 webbrowser.open(model[treeiter][2])
+
+    def not_implemented(self):
+        parent = self
+        md = gtk.MessageDialog(parent, gtk.DialogFlags.DESTROY_WITH_PARENT, gtk.MessageType.ERROR,
+                               gtk.ButtonsType.CLOSE, "Not implemented, yet. Please directly modify the XML file.")
+        md.run()
+        md.destroy()
+        return
