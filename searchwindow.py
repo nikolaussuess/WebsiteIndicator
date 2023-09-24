@@ -1,3 +1,4 @@
+import os
 import webbrowser
 
 import gi
@@ -7,6 +8,7 @@ gi.require_version('Pango', '1.0')
 from gi.repository import Gtk as gtk
 from gi.repository import Gdk as gdk
 from gi.repository import Pango
+from gi.repository import GdkPixbuf as pixbuf
 from model import Database
 
 
@@ -43,6 +45,7 @@ class SearchWindow(gtk.Window):
         col.pack_start(renderer, True)
         col.add_attribute(renderer, "text", 0)
         col.set_reorderable(True)
+        col.set_resizable(True)
         self.treeview.append_column(col)
 
         renderer = gtk.CellRendererText()
@@ -50,6 +53,7 @@ class SearchWindow(gtk.Window):
         col.pack_start(renderer, True)
         col.add_attribute(renderer, "text", 1)
         col.set_reorderable(True)
+        col.set_resizable(True)
         self.treeview.append_column(col)
 
         renderer = gtk.CellRendererText()
@@ -57,6 +61,7 @@ class SearchWindow(gtk.Window):
         col.pack_start(renderer, True)
         col.add_attribute(renderer, "text", 2)
         col.set_reorderable(True)
+        col.set_resizable(True)
         self.treeview.append_column(col)
 
         self.treeview.expand_all()
@@ -93,24 +98,56 @@ class SearchWindow(gtk.Window):
         """
         self.menu = gtk.Menu()
 
-        button_info = gtk.ImageMenuItem("Execute")
-        button_info.connect('activate', lambda source: self.do_execute_action(source))
-        self.menu.append(button_info)
+        desired_width = desired_height = 25
+
+        button_exec = gtk.ImageMenuItem("Execute")
+        button_exec.connect('activate', lambda source: self.do_execute_action(source))
+        pb = pixbuf.Pixbuf.new_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/execute.png')
+        pb = pb.scale_simple(desired_width, desired_height, pixbuf.InterpType.BILINEAR)
+        img = gtk.Image()
+        img.set_from_pixbuf(pb)
+        button_exec.set_image(img)
+        button_exec.set_always_show_image(True)
+        self.menu.append(button_exec)
 
         button_copy = gtk.ImageMenuItem("Copy link/action")
         button_copy.connect('activate', lambda source: self.copy_to_clipboard())
+        pb = pixbuf.Pixbuf.new_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/copy.png')
+        pb = pb.scale_simple(desired_width, desired_height, pixbuf.InterpType.BILINEAR)
+        img = gtk.Image()
+        img.set_from_pixbuf(pb)
+        button_copy.set_image(img)
+        button_copy.set_always_show_image(True)
         self.menu.append(button_copy)
 
         button_copy = gtk.ImageMenuItem("Copy title")
         button_copy.connect('activate', lambda source: self.copy_to_clipboard(what='text'))
+        pb = pixbuf.Pixbuf.new_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/copy.png')
+        pb = pb.scale_simple(desired_width, desired_height, pixbuf.InterpType.BILINEAR)
+        img = gtk.Image()
+        img.set_from_pixbuf(pb)
+        button_copy.set_image(img)
+        button_copy.set_always_show_image(True)
         self.menu.append(button_copy)
 
         button_edit = gtk.ImageMenuItem("Edit")
         button_edit.connect('activate', lambda source: self.not_implemented())
+        pb = pixbuf.Pixbuf.new_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/edit.png')
+        pb = pb.scale_simple(desired_width, desired_height, pixbuf.InterpType.BILINEAR)
+        img = gtk.Image()
+        img.set_from_pixbuf(pb)
+        button_edit.set_image(img)
+        button_edit.set_always_show_image(True)
         self.menu.append(button_edit)
 
         button_delete = gtk.ImageMenuItem("Delete")
         button_delete.connect('activate', lambda source: self.not_implemented())
+        pb = pixbuf.Pixbuf.new_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/delete.png')
+        pb = pb.scale_simple(desired_width, desired_height, pixbuf.InterpType.BILINEAR)
+        img = gtk.Image()
+        img.set_from_pixbuf(pb)
+        button_delete.set_image(img)
+        button_delete.set_always_show_image(True)
         self.menu.append(button_delete)
 
         self.menu.show_all()

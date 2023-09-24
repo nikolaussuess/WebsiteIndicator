@@ -16,7 +16,7 @@ class NewEntryWindow(gtk.Window):
 
         self.database = database
 
-        self.set_icon_from_file(os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + '/logos/lesezeichen.jpg'))
+        self.set_icon_from_file(os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + '/default_images/lesezeichen.jpg'))
 
         self.grid = gtk.Grid(margin_top=25, margin_bottom=25, margin_end=25, margin_start=25)
         self.grid.set_column_homogeneous(True)

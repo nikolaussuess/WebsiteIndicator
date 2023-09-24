@@ -61,7 +61,7 @@ def create_menu(indicator : appindicator.Indicator, database : Optional[Database
 
     # Add default entries
     img = gtk.Image()
-    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/logos/search.png')
+    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/search.png')
     item = gtk.ImageMenuItem('Search')
     item.set_image(img)
     item.set_always_show_image(True)
@@ -69,7 +69,7 @@ def create_menu(indicator : appindicator.Indicator, database : Optional[Database
     menu.append(item)
 
     img = gtk.Image()
-    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/logos/reload.png')
+    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/reload.png')
     item = gtk.ImageMenuItem('Reload file')
     item.set_image(img)
     item.set_always_show_image(True)
@@ -77,7 +77,7 @@ def create_menu(indicator : appindicator.Indicator, database : Optional[Database
     menu.append(item)
 
     img = gtk.Image()
-    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/logos/add.png')
+    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/add.png')
     item = gtk.ImageMenuItem('New entry')
     item.set_image(img)
     item.set_always_show_image(True)
@@ -86,7 +86,7 @@ def create_menu(indicator : appindicator.Indicator, database : Optional[Database
 
     # Quit-Button
     img = gtk.Image()
-    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/logos/quit.png')
+    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/quit.png')
     item = gtk.ImageMenuItem('Beenden')
     item.set_image(img)
     item.set_always_show_image(True)
@@ -108,6 +108,7 @@ def add_new_entry_window(indicator : appindicator.Indicator, database : Database
     window = NewEntryWindow(database)
     window.connect('destroy', lambda source: create_menu(indicator, database))
     window.show_all()
+    window.present()
 
 
 def show_search_window(database : Database) -> None:
@@ -118,13 +119,14 @@ def show_search_window(database : Database) -> None:
     """
     window = SearchWindow(database)
     window.show_all()
+    window.present()
 
 
 if __name__ == "__main__":
     # Create indicator
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     indicator = appindicator.Indicator.new(APPINDICATOR_ID, os.path.abspath(
-        os.path.dirname(os.path.realpath(__file__)) + '/logos/lesezeichen.jpg'),
+        os.path.dirname(os.path.realpath(__file__)) + '/default_images/lesezeichen.jpg'),
                                            appindicator.IndicatorCategory.SYSTEM_SERVICES)
     indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
 
