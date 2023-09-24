@@ -4,9 +4,6 @@
 from typing import Optional
 
 import gi
-
-import newentry
-
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk as gtk
 

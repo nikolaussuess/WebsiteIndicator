@@ -34,6 +34,7 @@ class SearchWindow(gtk.Window):
         self.add(self.grid)
 
         self.searchentry = gtk.SearchEntry()
+        self.searchentry.grab_focus()
         self.grid.attach(self.searchentry, 0, 0, 3, 1)
 
         self.subtree_checkbox = gtk.CheckButton(label="show subtrees of matches")
@@ -44,6 +45,7 @@ class SearchWindow(gtk.Window):
         col = gtk.TreeViewColumn(title="Name")
         col.pack_start(renderer, True)
         col.add_attribute(renderer, "text", 0)
+        col.add_attribute(renderer, "weight", 4)
         col.set_reorderable(True)
         col.set_resizable(True)
         self.treeview.append_column(col)
@@ -52,6 +54,7 @@ class SearchWindow(gtk.Window):
         col = gtk.TreeViewColumn(title="Type")
         col.pack_start(renderer, True)
         col.add_attribute(renderer, "text", 1)
+        col.add_attribute(renderer, "weight", 4)
         col.set_reorderable(True)
         col.set_resizable(True)
         self.treeview.append_column(col)
@@ -60,6 +63,7 @@ class SearchWindow(gtk.Window):
         col = gtk.TreeViewColumn(title="Action")
         col.pack_start(renderer, True)
         col.add_attribute(renderer, "text", 2)
+        col.add_attribute(renderer, "weight", 4)
         col.set_reorderable(True)
         col.set_resizable(True)
         self.treeview.append_column(col)
@@ -71,6 +75,7 @@ class SearchWindow(gtk.Window):
 
         # Create the filter with the liststore model
         self.tree_store = self.database.get_item_hierarchy()
+        self.tree_store.foreach(self.reset_row, True)
         self.filter_ = self.tree_store.filter_new()
         # We do not use a filter function, but a column in the model that
         # determines whether to display an entry or not.
