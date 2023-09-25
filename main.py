@@ -57,9 +57,8 @@ def create_menu(indicator : appindicator.Indicator, database : Optional[Database
     menu.append(gtk.SeparatorMenuItem())
 
     # Add default entries
-    img = gtk.Image()
-    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/search.png')
     item = gtk.ImageMenuItem('Search')
+    img = gtk.Image.new_from_icon_name("search", gtk.IconSize.MENU)
     item.set_image(img)
     item.set_always_show_image(True)
     item.connect('activate', lambda source: show_search_window(database))
@@ -82,9 +81,8 @@ def create_menu(indicator : appindicator.Indicator, database : Optional[Database
     menu.append(item)
 
     # Quit-Button
-    img = gtk.Image()
-    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/quit.png')
     item = gtk.ImageMenuItem('Beenden')
+    img = gtk.Image.new_from_icon_name("window-close", gtk.IconSize.MENU)
     item.set_image(img)
     item.set_always_show_image(True)
     item.connect('activate', quit)
