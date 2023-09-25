@@ -3,6 +3,8 @@ import webbrowser
 
 import gi
 
+from config import config
+
 gi.require_version('Gtk', '3.0')
 gi.require_version('Pango', '1.0')
 from gi.repository import Gtk as gtk
@@ -107,7 +109,7 @@ class SearchWindow(gtk.Window):
 
         button_exec = gtk.ImageMenuItem("Execute")
         button_exec.connect('activate', lambda source: self.do_execute_action(source))
-        pb = pixbuf.Pixbuf.new_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/execute.png')
+        pb = pixbuf.Pixbuf.new_from_file(os.path.join(config['script_dir'], 'default_images', 'execute.png'))
         pb = pb.scale_simple(desired_width, desired_height, pixbuf.InterpType.BILINEAR)
         img = gtk.Image()
         img.set_from_pixbuf(pb)

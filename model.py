@@ -10,12 +10,13 @@ import gi
 import xmltodict
 import xml.etree.ElementTree as ET
 
+from config import config
 
 gi.require_version('Gtk', '3.0')
 gi.require_version('Pango', '1.0')
 from gi.repository import Gtk as gtk
 from gi.repository import Pango
-from gi.repository import Gdk as gdk
+from gi.repository import GdkPixbuf as pixbuf
 
 T = TypeVar('T')
 
@@ -99,7 +100,7 @@ class Database:
         Read the entries / data from an XML file.
         :return: Nothing
         """
-        with open(os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + '/' + self.filename)) as fd:
+        with open(self.filename) as fd:
             doc = xmltodict.parse(fd.read())
             xml_menu = doc['menu']
         self.data = self._parse_file_recursive(xml_menu)
@@ -154,10 +155,9 @@ class Database:
         ET.indent(data, space=" ", level=0)
 
         # Make a copy of the file to not loose content just in case
-        shutil.copy(os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + '/' + self.filename),
-                    os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + '/' + self.filename + "~"))
+        shutil.copy(self.filename, self.filename + "~")
 
-        with open(os.path.abspath(os.path.dirname(os.path.realpath(__file__)) + '/' + self.filename), "wb") as f:
+        with open(self.filename, "wb") as f:
             f.write(ET.tostring(data))
 
     def _save_data_recursive(self, parent : Item, parent_tag : ET.Element):
@@ -194,8 +194,12 @@ class Database:
             if item.type == Database.Item.TYPE_WEB:
 
                 if item.icon is not None:
+
+                    pb = pixbuf.Pixbuf.new_from_file(
+                        os.path.join(os.path.join(config['general']['image_dir'], item.icon)))
+                    pb = pb.scale_simple(25, 25, pixbuf.InterpType.BILINEAR)
                     img = gtk.Image()
-                    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/logos/' + item.icon)
+                    img.set_from_pixbuf(pb)
                     gtk_menu_item = gtk.ImageMenuItem(item.text)
                     gtk_menu_item.set_image(img)
                     gtk_menu_item.set_always_show_image(True)
@@ -210,8 +214,11 @@ class Database:
             elif item.type == Database.Item.TYPE_MENU:
                 submenu = self.to_gtk_menu(item)
                 if item.icon is not None:
+                    pb = pixbuf.Pixbuf.new_from_file(
+                        os.path.join(os.path.join(config['general']['image_dir'], item.icon)))
+                    pb = pb.scale_simple(25, 25, pixbuf.InterpType.BILINEAR)
                     img = gtk.Image()
-                    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/logos/' + item.icon)
+                    img.set_from_pixbuf(pb)
                     submenu_item = gtk.ImageMenuItem(item.text)
                     submenu_item.set_image(img)
                     submenu_item.set_always_show_image(True)

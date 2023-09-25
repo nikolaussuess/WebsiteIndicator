@@ -17,6 +17,7 @@ import os
 from searchwindow import SearchWindow
 from newentry import NewEntryWindow
 from model import Database
+from config import *
 
 
 APPINDICATOR_ID = 'lesezeichen'
@@ -42,7 +43,7 @@ def create_menu(indicator : appindicator.Indicator, database : Optional[Database
     # If we, on the other hand, already have read the data, use it from the parameter.
     if database is None:
         try:
-            database = Database("lesezeichen.xml")
+            database = Database(config['general']['file_path'])
             database.parse_file()
         except Exception as e:
             # File not found, not access rights etc.
@@ -65,7 +66,7 @@ def create_menu(indicator : appindicator.Indicator, database : Optional[Database
     menu.append(item)
 
     img = gtk.Image()
-    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/reload.png')
+    img.set_from_file(os.path.join(config['script_dir'], 'default_images', 'reload.png'))
     item = gtk.ImageMenuItem('Reload file')
     item.set_image(img)
     item.set_always_show_image(True)
@@ -73,7 +74,7 @@ def create_menu(indicator : appindicator.Indicator, database : Optional[Database
     menu.append(item)
 
     img = gtk.Image()
-    img.set_from_file(os.path.dirname(os.path.realpath(__file__)) + '/default_images/add.png')
+    img.set_from_file(os.path.join(config['script_dir'], 'default_images', 'add.png'))
     item = gtk.ImageMenuItem('New entry')
     item.set_image(img)
     item.set_always_show_image(True)
@@ -120,8 +121,8 @@ def show_search_window(database : Database) -> None:
 if __name__ == "__main__":
     # Create indicator
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-    indicator = appindicator.Indicator.new(APPINDICATOR_ID, os.path.abspath(
-        os.path.dirname(os.path.realpath(__file__)) + '/default_images/lesezeichen.jpg'),
+    indicator = appindicator.Indicator.new(APPINDICATOR_ID,
+        os.path.join(config['script_dir'], 'default_images', 'lesezeichen.jpg'),
                                            appindicator.IndicatorCategory.SYSTEM_SERVICES)
     indicator.set_status(appindicator.IndicatorStatus.ACTIVE)
 
