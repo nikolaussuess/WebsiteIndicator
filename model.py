@@ -95,16 +95,23 @@ class Database:
         self.filename : str = filename
         self.data : Database.Item = Database.Item()
 
-    def parse_file(self) -> None:
+    def parse_file(self) -> bool:
         """
         Read the entries / data from an XML file.
-        :return: Nothing
+        :return: False if the file was empty and the menu was newly created, True otherwise
         """
         with open(self.filename) as fd:
-            doc = xmltodict.parse(fd.read())
+            contents = fd.read()
+            # File is empty
+            if not contents.strip(" "):
+                self.data = Database.Item(type=Database.Item.TYPE_MENU)
+                self.data.set_text("Menu")
+                return False
+            doc = xmltodict.parse(contents)
             xml_menu = doc['menu']
         self.data = self._parse_file_recursive(xml_menu)
         print(self.data)
+        return True
 
     def _parse_file_recursive(self, xml_menu : dict) -> Item:
         menu = Database.Item(type=Database.Item.TYPE_MENU)

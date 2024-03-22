@@ -1,5 +1,4 @@
 import os
-import sys
 
 import yaml
 
@@ -16,6 +15,9 @@ else:
 if os.path.isfile(os.path.join(_CONFIG_DIR, _CONFIG_FILE)):
     with open(os.path.join(_CONFIG_DIR, _CONFIG_FILE), "r") as file:
         config = yaml.safe_load(file)
+        # If config file is empty, make an empty dictionary
+        if not config:
+            config = {}
 else:
     config = {}
 
@@ -33,6 +35,8 @@ if 'file_name' not in config['general']:
 if 'image_dir' not in config['general']:
     config['general']['image_dir'] = os.path.join(_CONFIG_DIR, "logos")
 else:
-    config['general']['image_dir'] = config['general']['image_dir'].replace("${CONFIG_DIR}", _CONFIG_DIR)
+    config['general']['image_dir'] = config['general']['image_dir']\
+        .replace("${CONFIG_DIR}", _CONFIG_DIR)\
+        .replace("${HOME}", os.getenv("HOME"))
 
 config['general']['file_path'] = os.path.join(_CONFIG_DIR, config['general']['file_name'])

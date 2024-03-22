@@ -13,7 +13,7 @@ gi.require_version('AyatanaAppIndicator3', '0.1')
 from gi.repository import AyatanaAppIndicator3 as appindicator
 # from gi.repository import AppIndicator3 as appindicator
 import signal
-import os
+import sys
 
 from searchwindow import SearchWindow
 from newentry import NewEntryWindow
@@ -33,15 +33,74 @@ def quit(source = None) -> None:
     gtk.main_quit()
 
 
-def create_database():
+def create_database() -> Database:
+    """
+    Read the (database) file and return a database object.
+    :return: database containing the bookmark entries
+    """
     try:
         database = Database(config['general']['file_path'])
-        database.parse_file()
+
+        # If bookmark database file does not exist, ask whether it should be created or not.
+        # If the user chooses "yes", then an empty file is created (could be improved later ...).
+        if not os.path.isfile(config['general']['file_path']):
+            # FIXME: If parent is none, the message dialog is shown in background ...
+            # This is why a temporary window is created ... but a better solution should be found ...
+            parent = gtk.Window()
+            parent.set_default_size(0, 0)
+            parent.show()
+            dialog = gtk.MessageDialog(parent, gtk.DialogFlags.MODAL,
+                                       gtk.MessageType.QUESTION, gtk.ButtonsType.YES_NO)
+            dialog.set_title("Bookmark file does not exist")
+            dialog.set_markup("File '" + config['general']['file_path'] + "' does not exist. " +
+                              "Create it?\n\nNote: If you choose 'No', the program is quited.")
+            dialog.set_icon_name("dialog-question")
+            response = dialog.run()
+            dialog.destroy()
+            if response == gtk.ResponseType.YES:
+                with open(config['general']['file_path'], 'w') as fp:
+                    pass
+                parent.destroy()
+            else:
+                parent.destroy()
+                quit()
+                exit(0)
+
+        # If the file was empty, ask how to proceed.
+        if not database.parse_file():
+            # FIXME: If parent is none, the message dialog is shown in background ...
+            # This is why a temporary window is created ... but a better solution should be found ...
+            parent = gtk.Window()
+            parent.set_default_size(0, 0)
+            parent.show()
+            dialog = gtk.MessageDialog(parent, gtk.DialogFlags.MODAL,
+                                       gtk.MessageType.QUESTION, gtk.ButtonsType.YES_NO)
+            dialog.set_title("Bookmark file empty")
+            dialog.set_markup("File '" + config['general']['file_path'] + "' was empty. " +
+                                   "Hence, a new menu was created. If this is an error and there should be an existing "
+                                   "database file, please check the config file '"+str(config['dir'])+"/config.yml'.\n"
+                                   "Do you want to proceed?")
+            dialog.set_icon_name("dialog-question")
+            response = dialog.run()
+            dialog.destroy()
+            if response != gtk.ResponseType.YES:
+                parent.destroy()
+                quit()
+                exit(0)
+            else:
+                parent.destroy()
     except Exception as e:
         # File not found, not access rights etc.
-        parent = None
-        md = gtk.MessageDialog(parent, gtk.DialogFlags.DESTROY_WITH_PARENT, gtk.MessageType.ERROR,
-                               gtk.ButtonsType.CLOSE, "Error parsing XML file.\n" + str(e))
+        print("Exception: ",str(e))
+        # FIXME: If parent is none, the message dialog is shown in background ...
+        # This is why a temporary window is created ... but a better solution should be found ...
+        parent = gtk.Window()
+        parent.set_default_size(0,0)
+        parent.show()
+        md = gtk.MessageDialog(parent, gtk.DialogFlags.MODAL, gtk.MessageType.ERROR,
+                               gtk.ButtonsType.CLOSE)
+        md.set_title("Error parsing XML file")
+        md.set_markup("Error parsing XML file '"+config['general']['file_path']+"':\n" + str(e))
         md.run()
         md.destroy()
         exit(1)
@@ -134,6 +193,7 @@ def show_search_window(indicator : Optional[appindicator.Indicator], database : 
 
 if __name__ == "__main__":
 
+    # Parse command line arguments
     parser = argparse.ArgumentParser(prog="WebsiteIndicator", description="Bookmark management tool with indicator.")
     parser.add_argument('--version', action='version', version='dev')
     #parser.add_argument('--no-indicator', action='store_true', help="Does NOT start the indicator.")
@@ -151,7 +211,7 @@ if __name__ == "__main__":
         add_new_entry_window(None, database).connect('destroy', gtk.main_quit)
         gtk.main()
     elif args['print_config']:
-        print("===== CONFIG =====")
+        print("##### config.yml of WebsiteIndicator #####")
         yaml.dump(config, stream=sys.stdout)
         print()
         exit(0)
