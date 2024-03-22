@@ -261,9 +261,10 @@ class Database:
         (3) str:            action
         (4) bool:           always true on return; can be used to hide some elements in the view
         (5) Pango.Weight:   not set on return; can be used to print some entries bold
+        (6) int:            global ID
         :return: Menu entries
         """
-        treestore = gtk.TreeStore.new(types=[str, str, str, bool, Pango.Weight])
+        treestore = gtk.TreeStore.new(types=[str, str, str, bool, Pango.Weight, int])
         toplevel : gtk.TreeIter = treestore.append(None)
         treestore.set_value(toplevel, 0, self.data.text)
         if self.data.type is not None:
@@ -271,6 +272,7 @@ class Database:
         if self.data.action is not None:
             treestore.set_value(toplevel, 2, self.data.action)
         treestore.set_value(toplevel, 3, True)
+        treestore.set_value(toplevel, 5, self.data.global_id)
         self._get_item_hierarchy_recursive(self.data, treestore, toplevel)
         return treestore
 
@@ -285,6 +287,7 @@ class Database:
             if menu_entry.action is not None:
                 treestore.set_value(newlevel, 2, menu_entry.action)
             treestore.set_value(newlevel, 3, True)
+            treestore.set_value(newlevel, 5, menu_entry.global_id)
             self._get_item_hierarchy_recursive(menu_entry, treestore, newlevel)
 
     def add_item(self, parent_id : int, item : Item) -> bool:
@@ -305,6 +308,30 @@ class Database:
             if self._add_item_recursive(parent_id, item, child):
                 return True
         return False
+
+    def delete_item_by_id(self, id : int) -> bool:
+        """
+        Delete an entry by ID
+        :param id: The id of the item to be deleted.
+        :return: True when the item could be deleted, False otherwise (e.g., the item does not exist)
+        """
+        return self._delete_item_recursive(id, self.data)
+
+    def _delete_item_recursive(self, id : int, data : Item) -> bool:
+        found = False
+        idx = 0
+        for idx in range(len(data.get_children())):
+            if data.get_children()[idx].global_id == id:
+                found = True
+                break
+            if self._delete_item_recursive(id, data.get_children()[idx]):
+                return True
+
+        if found:
+            del data.get_children()[idx]
+            return True
+        else:
+            return False
 
     def __str__(self) -> str:
         return pprint.pformat(self.data)

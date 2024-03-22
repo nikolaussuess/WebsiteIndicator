@@ -36,7 +36,3 @@ else:
     config['general']['image_dir'] = config['general']['image_dir'].replace("${CONFIG_DIR}", _CONFIG_DIR)
 
 config['general']['file_path'] = os.path.join(_CONFIG_DIR, config['general']['file_name'])
-
-print("===== CONFIG =====")
-yaml.dump(config, stream=sys.stdout)
-print()

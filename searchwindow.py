@@ -103,11 +103,26 @@ class SearchWindow(gtk.Window):
         Creates the context menu for the table view.
         :return: Nothing.
         """
-        self.menu = gtk.Menu()
+
+        def popup_action(button, event):
+            # Right click
+            if event.button != 3:
+                return
+
+            # Check entry type
+            sel = self.treeview.get_selection()
+            model, treeiter = sel.get_selected_rows()
+            if treeiter is not None and model[treeiter][1] == Database.Item.TYPE_WEB:
+                self.www_menu.popup(None, None, None, None, event.button, event.time)
+            elif treeiter is not None and model[treeiter][1] == Database.Item.TYPE_MENU:
+                self.menu_menu.popup(None, None, None, None, event.button, event.time)
+
+        # www menu
+        self.www_menu = gtk.Menu()
 
         desired_width = desired_height = 25
 
-        button_exec = gtk.ImageMenuItem("Execute")
+        button_exec = gtk.ImageMenuItem("Open website")
         button_exec.connect('activate', lambda source: self.do_execute_action(source))
         pb = pixbuf.Pixbuf.new_from_file(os.path.join(config['script_dir'], 'default_images', 'execute.png'))
         pb = pb.scale_simple(desired_width, desired_height, pixbuf.InterpType.BILINEAR)
@@ -115,39 +130,65 @@ class SearchWindow(gtk.Window):
         img.set_from_pixbuf(pb)
         button_exec.set_image(img)
         button_exec.set_always_show_image(True)
-        self.menu.append(button_exec)
+        self.www_menu.append(button_exec)
 
-        button_copy = gtk.ImageMenuItem("Copy link/action")
+        button_copy = gtk.ImageMenuItem("Copy link")
         button_copy.connect('activate', lambda source: self.copy_to_clipboard())
         img = gtk.Image.new_from_icon_name("edit-copy", gtk.IconSize.MENU)
         button_copy.set_image(img)
         button_copy.set_always_show_image(True)
-        self.menu.append(button_copy)
+        self.www_menu.append(button_copy)
 
         button_copy = gtk.ImageMenuItem("Copy title")
         button_copy.connect('activate', lambda source: self.copy_to_clipboard(what='text'))
         img = gtk.Image.new_from_icon_name("edit-copy", gtk.IconSize.MENU)
         button_copy.set_image(img)
         button_copy.set_always_show_image(True)
-        self.menu.append(button_copy)
+        self.www_menu.append(button_copy)
 
         button_edit = gtk.ImageMenuItem("Edit")
         button_edit.connect('activate', lambda source: self.not_implemented())
         img = gtk.Image.new_from_icon_name("edit-entry", gtk.IconSize.MENU)
         button_edit.set_image(img)
         button_edit.set_always_show_image(True)
-        self.menu.append(button_edit)
+        self.www_menu.append(button_edit)
 
         button_delete = gtk.ImageMenuItem("Delete")
-        button_delete.connect('activate', lambda source: self.not_implemented())
+        button_delete.connect('activate', lambda source: self.do_delete_entry(source))
         img = gtk.Image.new_from_icon_name("delete", gtk.IconSize.MENU)
         button_delete.set_image(img)
         button_delete.set_always_show_image(True)
-        self.menu.append(button_delete)
+        self.www_menu.append(button_delete)
 
-        self.menu.show_all()
-        self.treeview.connect('button-release-event',
-                              lambda button, event: self.menu.popup(None, None, None, None, event.button, event.time) if event.button == 3 else None)
+        self.www_menu.show_all()
+
+        # menu menu
+        self.menu_menu = gtk.Menu()
+
+        button_copy = gtk.ImageMenuItem("Copy title")
+        button_copy.connect('activate', lambda source: self.copy_to_clipboard(what='text'))
+        img = gtk.Image.new_from_icon_name("edit-copy", gtk.IconSize.MENU)
+        button_copy.set_image(img)
+        button_copy.set_always_show_image(True)
+        self.menu_menu.append(button_copy)
+
+        button_edit = gtk.ImageMenuItem("Edit")
+        button_edit.connect('activate', lambda source: self.not_implemented())
+        img = gtk.Image.new_from_icon_name("edit-entry", gtk.IconSize.MENU)
+        button_edit.set_image(img)
+        button_edit.set_always_show_image(True)
+        self.menu_menu.append(button_edit)
+
+        button_delete = gtk.ImageMenuItem("Delete")
+        button_delete.connect('activate', lambda source: self.do_delete_entry(source))
+        img = gtk.Image.new_from_icon_name("delete", gtk.IconSize.MENU)
+        button_delete.set_image(img)
+        button_delete.set_always_show_image(True)
+        self.menu_menu.append(button_delete)
+
+        self.menu_menu.show_all()
+
+        self.treeview.connect('button-release-event', popup_action)
 
     def on_key_event(self, widget : gtk.Widget, event : gdk.EventKey) -> None:
         """
@@ -264,6 +305,64 @@ class SearchWindow(gtk.Window):
             model, treeiter = sel.get_selected_rows()
             if treeiter is not None and model[treeiter][1] == Database.Item.TYPE_WEB:
                 webbrowser.open(model[treeiter][2])
+
+    def do_delete_entry(self, widget : gtk.Widget) -> None:
+        sel = self.treeview.get_selection()
+        model, treeiter = sel.get_selected_rows()
+        if treeiter is not None:
+            id = model[treeiter][5]
+
+            if model[treeiter][1] == self.database.Item.TYPE_MENU:
+                dialog = gtk.MessageDialog(self, gtk.DialogFlags.DESTROY_WITH_PARENT,
+                                           gtk.MessageType.QUESTION, gtk.ButtonsType.YES_NO)
+                dialog.set_title("Delete selected menu?")
+                dialog.set_markup("Should the following menu be <b>deleted</b> (including sub-entries!)?\n"
+                                  f"<i>{model[treeiter][0]}</i>")
+                dialog.set_icon_name("dialog-ok")
+                response = dialog.run()
+                dialog.destroy()
+            else:
+                dialog = gtk.MessageDialog(self, gtk.DialogFlags.DESTROY_WITH_PARENT,
+                                           gtk.MessageType.QUESTION, gtk.ButtonsType.YES_NO)
+                dialog.set_title("Delete selected element?")
+                dialog.set_markup("Should the following element be <b>deleted</b>?\n"
+                                 f"<i>{model[treeiter][0]}</i> (<tt>{model[treeiter][1]}</tt>)")
+                dialog.set_icon_name("dialog-ok")
+                response = dialog.run()
+                dialog.destroy()
+
+            if response != gtk.ResponseType.YES:
+                return
+
+            if self.database.delete_item_by_id(id):
+                try:
+                    self.database.save_data()
+
+                    # Create the filter with the liststore model
+                    self.tree_store = self.database.get_item_hierarchy()
+                    self.tree_store.foreach(self.reset_row, True)
+                    self.filter_ = self.tree_store.filter_new()
+                    # We do not use a filter function, but a column in the model that
+                    # determines whether to display an entry or not.
+                    self.filter_.set_visible_column(3)
+                    self.treeview.set_model(self.filter_)
+                    self.treeview.expand_all()
+
+                except Exception as e:
+                    parent = self
+                    md = gtk.MessageDialog(parent, gtk.DialogFlags.DESTROY_WITH_PARENT, gtk.MessageType.ERROR,
+                                           gtk.ButtonsType.CLOSE, "Error writing file. Message: " + str(e))
+                    md.run()
+                    md.destroy()
+                    return
+            else:
+                parent = self
+                md = gtk.MessageDialog(parent, gtk.DialogFlags.DESTROY_WITH_PARENT, gtk.MessageType.ERROR,
+                                       gtk.ButtonsType.CLOSE, "Element not found. Something weird happend ...")
+                md.run()
+                md.destroy()
+                return
+            print("Global ID",id)
 
     def not_implemented(self):
         parent = self
